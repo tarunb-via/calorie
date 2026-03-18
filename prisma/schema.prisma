@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://user@localhost:5432/viadb?schema=public"
+}
+
+model DailyEntry {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @unique
+  goal        Int
+  waterGlasses Int     @default(0)
+  meals       Meal[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Meal {
+  id           Int      @id @default(autoincrement())
+  name         String
+  calories     Int
+  protein      Int
+  carbs        Int
+  fat          Int
+  consumedAt   DateTime
+  category     String
+  notes        String?
+  dailyEntry   DailyEntry @relation(fields: [dailyEntryId], references: [id], onDelete: Cascade)
+  dailyEntryId Int
+  createdAt    DateTime @default(now())
+}
