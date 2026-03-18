@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Flame, GlassWater, Plus, Salad, Target, TrendingUp } from 'lucide-react';
+import { Flame, GlassWater, Salad, Target, TrendingUp, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import DashboardHero from './components/DashboardHero';
 import SummaryCard from './components/SummaryCard';
@@ -48,16 +48,26 @@ export default function App() {
 
   const handleEntrySubmit = async (event) => {
     event.preventDefault();
-    await axios.post('/api/entries', entryForm);
-    await fetchEntries();
+    try {
+      setError('');
+      await axios.post('/api/entries', entryForm);
+      await fetchEntries();
+    } catch (err) {
+      setError('We could not save your daily target. Please try again.');
+    }
   };
 
   const handleMealSubmit = async (event) => {
     event.preventDefault();
-    const consumedAt = new Date(`${mealForm.date}T${mealForm.consumedAt}:00`).toISOString();
-    await axios.post('/api/meals', { ...mealForm, consumedAt });
-    setMealForm({ ...emptyMeal, date: mealForm.date });
-    await fetchEntries();
+    try {
+      setError('');
+      const consumedAt = new Date(`${mealForm.date}T${mealForm.consumedAt}:00`).toISOString();
+      await axios.post('/api/meals', { ...mealForm, consumedAt });
+      setMealForm({ ...emptyMeal, date: mealForm.date });
+      await fetchEntries();
+    } catch (err) {
+      setError('We could not add that meal. Double-check the details and try again.');
+    }
   };
 
   const summary = todayEntry || { totalCalories: 0, goal: Number(entryForm.goal), totalProtein: 0, totalCarbs: 0, totalFat: 0, waterGlasses: Number(entryForm.waterGlasses), meals: [] };
@@ -68,7 +78,12 @@ export default function App() {
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-10">
         <DashboardHero dateLabel={format(new Date(entryForm.date), 'EEEE, MMMM d')} calories={summary.totalCalories} goal={summary.goal} remaining={remaining} />
 
-        {error && <div className="rounded-2xl bg-white/90 p-4 text-base text-red-600 shadow-sm">{error}</div>}
+        {error && (
+          <div className="flex items-start gap-3 rounded-2xl bg-white/90 p-4 text-base text-red-600 shadow-sm">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard icon={Flame} label="Calories eaten" value={`${summary.totalCalories}`} helper={`${remaining} left today`} tone="brand" />
